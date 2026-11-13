@@ -1,0 +1,10 @@
+# Painel de gases
+
+Modelo 3D interativo da entrada de gases do forno de pirólise do projeto CarbonTech: garrafas de
+N₂ e CO₂, válvulas, controlador de caudal (MFC) e entrada do forno. Clica-se nas válvulas e vê-se
+por onde passa o gás, também numa falha de energia.
+
+Página: https://mauroleme.github.io/painel-gases/
+
+Esquema ilustrativo, com medidas assumidas. A página é um único ficheiro, `entrada_gases_3d.html`,
+que funciona sem instalar nada; para a atualizar, substitui-se esse ficheiro por uma versão nova.
