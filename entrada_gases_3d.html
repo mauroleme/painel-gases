@@ -90,8 +90,8 @@
     <div id="rotulos"></div>
     <div id="comandos">
       <div class="grupo" role="group" aria-label="Vista">
-        <button data-vista="painel" aria-pressed="true">Painel</button>
-        <button data-vista="completo" aria-pressed="false">Completo</button>
+        <button data-vista="completo" aria-pressed="true">Completo</button>
+        <button data-vista="caixa" aria-pressed="false">Caixa (de trás)</button>
         <button data-vista="forno" aria-pressed="false">Entrada do forno</button>
       </div>
       <div class="grupo" role="group" aria-label="Energia">
@@ -117,7 +117,7 @@
       <a href="../condicionamento/bloco3_banho_3d.html">Início e banho (1 a 3)</a>
       <a href="../condicionamento/blocos4a10_filtros_sensores_3d.html">Filtros e medição (4 a 10)</a>
     </nav>
-    <p class="nota">Esquema ilustrativo, com medidas assumidas. As peças estão pela ordem do esquema da lógica das válvulas: a linha principal em cima e a purga em baixo. <b>Clica nas válvulas, nas garrafas e no MFC</b> para os comandar.</p>
+    <p class="nota">Esquema ilustrativo, com medidas assumidas. Montagem prevista: forno à esquerda, garrafas à direita e as válvulas numa caixa de 50 × 70 × 20 cm logo atrás do forno; o tracejado marca só o espaço. As peças estão numa placa virada para trás, pela ordem do esquema da lógica, e veem-se na vista «Caixa (de trás)». <b>Clica nas válvulas, nas garrafas e no MFC</b> para os comandar.</p>
 
     <div class="estado" id="estado"></div>
     <ul class="avisos" id="avisos"></ul>
@@ -211,75 +211,79 @@ var LogicaGases = (function () {
   var GASES = ['n2', 'co2'];
   var NOME = { n2: 'N₂', co2: 'CO₂' };
 
-  // nós da rede, em mm (x para a direita, y para cima, z para a frente)
+  // Nós da rede, em mm. Os das válvulas estão no referencial da placa (x para a direita e y para
+  // cima de quem está atrás da caixa; z a sair da placa); a placa fica na caixa atrás do forno,
+  // virada para trás. Os nós em MUNDO (garrafas, PT-01, forno) estão no referencial da sala.
+  var MUNDO = ['gN2', 'gCO2', 'tPT', 'pt01', 'forno'];
   var NOS = {
-    gN2: [-625, 1060, -250], gCO2: [-905, 1060, -250],
-    inN2: [-400, 360, TZ], tN2: [-360, 360, TZ],
-    inCO2: [-400, 220, TZ], tCO2: [-320, 220, TZ],
-    v1a: [-202, 460, TZ], v1b: [-138, 460, TZ],
-    ck1a: [15, 460, TZ], ck1b: [65, 460, TZ],
-    v2a: [-202, 380, TZ], v2b: [-138, 380, TZ],
-    ck2a: [15, 380, TZ], ck2b: [65, 380, TZ],
-    tM: [90, 420, TZ],
-    mfcA: [109, 420, TZ], mfcB: [221, 420, TZ],
-    tF: [270, 315, TZ], saida: [330, 315, TZ],
-    jN2: [-270, 260, TZ],
-    v3a: [-202, 260, TZ], v3b: [-138, 260, TZ],
-    v5a: [-63, 260, TZ], v5b: [33, 260, TZ],
-    v9a: [57, 260, TZ], v9b: [103, 260, TZ],
-    kN2: [130, 260, TZ],
-    ck3a: [150, 260, TZ], ck3b: [200, 260, TZ],
-    v8a: [-103, 304, TZ], v8b: [-57, 304, TZ],
-    jCO2: [-270, 160, TZ],
-    v4a: [-202, 160, TZ], v4b: [-138, 160, TZ],
-    v6a: [-63, 160, TZ], v6b: [33, 160, TZ],
-    v10a: [57, 160, TZ], v10b: [103, 160, TZ],
-    kCO2: [130, 160, TZ],
-    ck4a: [150, 160, TZ], ck4b: [200, 160, TZ],
-    v7a: [-103, 204, TZ], v7b: [-57, 204, TZ],
-    tP: [215, 210, TZ],
-    ck5a: [270, 400, TZ], ck5b: [270, 350, TZ],
-    tPT: [620, 1000, TZ], pt01: [620, 1030, TZ],
-    forno: [760, 950, TZ]
+    gN2: [255, 1060, -260], gCO2: [525, 1060, -260],
+    inN2: [-235, 505, TZ], tN2: [-200, 505, TZ],
+    inCO2: [-235, 350, TZ], tCO2: [-165, 350, TZ],
+    v1a: [-142, 610, TZ], v1b: [-78, 610, TZ],
+    ck1a: [-20, 610, TZ], ck1b: [30, 610, TZ],
+    v2a: [-142, 530, TZ], v2b: [-78, 530, TZ],
+    ck2a: [-20, 530, TZ], ck2b: [30, 530, TZ],
+    tM: [45, 570, TZ],
+    mfcA: [64, 570, TZ], mfcB: [176, 570, TZ],
+    ck5a: [215, 545, TZ], ck5b: [215, 495, TZ],
+    tF: [215, 310, TZ], saida: [235, 310, TZ],
+    jN2: [-150, 400, TZ],
+    v3a: [-132, 400, TZ], v3b: [-68, 400, TZ],
+    v5a: [-55, 400, TZ], v5b: [41, 400, TZ],
+    v9a: [50, 400, TZ], v9b: [96, 400, TZ],
+    kN2: [108, 400, TZ],
+    ck3a: [118, 400, TZ], ck3b: [168, 400, TZ],
+    v8a: [-43, 450, TZ], v8b: [3, 450, TZ],
+    jCO2: [-150, 220, TZ],
+    v4a: [-132, 220, TZ], v4b: [-68, 220, TZ],
+    v6a: [-55, 220, TZ], v6b: [41, 220, TZ],
+    v10a: [50, 220, TZ], v10b: [96, 220, TZ],
+    kCO2: [108, 220, TZ],
+    ck4a: [118, 220, TZ], ck4b: [168, 220, TZ],
+    v7a: [-43, 270, TZ], v7b: [3, 270, TZ],
+    tP: [180, 310, TZ],
+    tPT: [-440, 1000, 0], pt01: [-440, 1030, 0],
+    forno: [-300, 950, 0]
   };
 
-  // tubos: [nó, nó, pontos intermédios]
+  // tubos: [nó, nó, pontos intermédios]; num tubo que liga a um nó de MUNDO, os pontos
+  // intermédios estão no referencial da sala
   var TUBOS = [
-    ['gN2', 'inN2', [[-600, 1060, -250], [-600, 360, -250], [-600, 360, TZ]]],
-    ['gCO2', 'inCO2', [[-860, 1060, -250], [-860, 220, -250], [-860, 220, TZ]]],
+    ['gN2', 'inN2', [[230, 1060, -260], [230, 475, -260]]],
+    ['gCO2', 'inCO2', [[480, 1060, -260], [480, 320, -260], [480, 320, -100], [-40, 320, -100], [-40, 320, -260]]],
     ['inN2', 'tN2'],
-    ['tN2', 'v1a', [[-360, 460, TZ]]],
+    ['tN2', 'v1a', [[-200, 610, TZ]]],
     ['v1b', 'ck1a'],
-    ['ck1b', 'tM', [[90, 460, TZ]]],
+    ['ck1b', 'tM', [[45, 610, TZ]]],
     ['inCO2', 'tCO2'],
-    ['tCO2', 'v2a', [[-320, 236, TZ], [-320, 246, TZ + 28], [-320, 274, TZ + 28], [-320, 284, TZ], [-320, 380, TZ]]],
+    ['tCO2', 'v2a', [[-165, 382, TZ], [-165, 392, TZ + 26], [-165, 408, TZ + 26], [-165, 418, TZ], [-165, 530, TZ]]],
     ['v2b', 'ck2a'],
-    ['ck2b', 'tM', [[90, 380, TZ]]],
+    ['ck2b', 'tM', [[45, 530, TZ]]],
     ['tM', 'mfcA'],
-    ['mfcB', 'ck5a', [[270, 420, TZ]]],
+    ['mfcB', 'ck5a', [[215, 570, TZ]]],
     ['ck5b', 'tF'],
-    ['tN2', 'jN2', [[-360, 260, TZ]]],
+    ['tN2', 'jN2', [[-200, 400, TZ]]],
     ['jN2', 'v3a'],
     ['v3b', 'v5a'],
     ['v5b', 'v9a'],
     ['v9b', 'kN2'],
     ['kN2', 'ck3a'],
-    ['ck3b', 'tP', [[215, 260, TZ]]],
-    ['jN2', 'v8a', [[-270, 304, TZ]]],
-    ['v8b', 'kN2', [[130, 304, TZ]]],
-    ['tCO2', 'jCO2', [[-320, 160, TZ]]],
+    ['ck3b', 'tP', [[180, 400, TZ]]],
+    ['jN2', 'v8a', [[-150, 450, TZ]]],
+    ['v8b', 'kN2', [[108, 450, TZ]]],
+    ['tCO2', 'jCO2', [[-165, 220, TZ]]],
     ['jCO2', 'v4a'],
     ['v4b', 'v6a'],
     ['v6b', 'v10a'],
     ['v10b', 'kCO2'],
     ['kCO2', 'ck4a'],
-    ['ck4b', 'tP', [[215, 160, TZ]]],
-    ['jCO2', 'v7a', [[-270, 204, TZ]]],
-    ['v7b', 'kCO2', [[130, 204, TZ]]],
-    ['tP', 'tF', [[270, 210, TZ]]],
+    ['ck4b', 'tP', [[180, 220, TZ]]],
+    ['jCO2', 'v7a', [[-150, 270, TZ]]],
+    ['v7b', 'kCO2', [[108, 270, TZ]]],
+    ['tP', 'tF'],
     ['tF', 'saida'],
-    ['saida', 'tPT', [[420, 315, TZ], [420, 1000, TZ]]],
-    ['tPT', 'forno', [[760, 1000, TZ]]],
+    ['saida', 'tPT', [[-580, 280, -260], [-580, 1000, -260], [-580, 1000, 0]]],
+    ['tPT', 'forno', [[-300, 1000, 0]]],
     ['tPT', 'pt01']
   ];
 
@@ -554,7 +558,7 @@ var LogicaGases = (function () {
   }
 
   return {
-    TZ: TZ, GASES: GASES, NOME: NOME, NOS: NOS, TUBOS: TUBOS, ELEMENTOS: ELEMENTOS, ELEM: ELEM,
+    TZ: TZ, GASES: GASES, NOME: NOME, NOS: NOS, TUBOS: TUBOS, ELEMENTOS: ELEMENTOS, ELEM: ELEM, MUNDO: MUNDO,
     RELES: RELES, NOME_RELE: NOME_RELE, CURTO_RELE: CURTO_RELE, PASSOS: PASSOS, CHAVE_FORNO: CHAVE_FORNO,
     estadoInicial: estadoInicial, copia: copia, aberta: aberta, calcula: calcula, avalia: avalia,
     contaReles: contaReles, aplicaPasso: aplicaPasso, relesDoPasso: relesDoPasso, impulsosDaCopia: impulsosDaCopia
@@ -665,25 +669,37 @@ var LogicaGases = (function () {
     clicaveis.push(grupo);
     return c;
   }
-  function novoGrupo(x, y, z) {
+  function novoGrupo(x, y, z, pai) {
     var g = new THREE.Group();
     g.position.set(x, y, z);
-    scene.add(g);
+    (pai || scene).add(g);
     return g;
   }
 
-  // bancada e placa do painel
+  // bancada; forno à esquerda; atrás dele, a caixa das válvulas (50 × 70 × 20 cm, só o espaço,
+  // a tracejado), com as peças numa placa virada para trás
   caixa(7000, 8, 7000, 0, -34, 0, mat(0xe2e5e9));
-  var mPerfil = mat(0xb4bbc2, { shininess: 60 });
-  caixa(800, 400, 10, -45, 305, -5, mat(0xf4f5f1));
-  [-400, 310].forEach(function (x) {
-    caixa(28, 140, 28, x, 35, -10, mPerfil);
-    caixa(80, 6, 120, x, -27, -10, mPerfil);
-  });
+  var FX = -300, FZ = 0;
+  var CX = FX, CY = 320, CZ = -280;
+  var painel = new THREE.Group();
+  painel.position.set(CX, -30, -230);
+  painel.rotation.y = Math.PI;
+  scene.add(painel);
+  painel.updateMatrixWorld(true);
+  function aMundo(p) { return painel.localToWorld(v3(p)); }
+  caixa(480, 680, 6, 0, 350, -8, mat(0xf4f5f1, { transparent: true, opacity: 0.75, depthWrite: false, side: THREE.DoubleSide }), painel);
+  var contorno = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(500, 700, 200)),
+    new THREE.LineDashedMaterial({ color: 0x5f6e7a, dashSize: 14, gapSize: 9 }));
+  contorno.position.set(CX, CY, CZ);
+  contorno.computeLineDistances();
+  scene.add(contorno);
+  var sol2 = new THREE.DirectionalLight(0xffffff, 0.9);
+  sol2.position.set(400, 700, -900);
+  scene.add(sol2);
 
-  // garrafas com torneira, redutor e racor de 1/8" para 4 mm
+  // garrafas com torneira, redutor (virado para a caixa) e racor de 1/8" para 4 mm
   function garrafa(id, gas, x, corOmbro) {
-    var z = -250;
+    var z = -260, s = -1;
     var g = novoGrupo(0, 0, 0);
     var mCorpo = mat(0x5b6670, { shininess: 50 }), mLat = mat(0xc9a54a, { shininess: 90 });
     var mReg = mat(0xc4cad0, { shininess: 100 }), mVol = mat(0x2f343a);
@@ -700,22 +716,22 @@ var LogicaGases = (function () {
     cilindro(5, 22, x, 1080, z, mLat, g);
     var vol = anel(22, 5, x, 1092, z, mVol, g);
     vol.rotation.x = Math.PI / 2;
-    cilX(6, 22, x + 28, 1060, z, mLat, g);
-    caixa(40, 50, 40, x + 55, 1060, z, mReg, g);
+    cilX(6, 22, x + s * 28, 1060, z, mLat, g);
+    caixa(40, 50, 40, x + s * 55, 1060, z, mReg, g);
     [1072, 1047].forEach(function (y) {
-      cilZ(10, 5, x + 55, y, z + 22, mat(0xffffff), g);
-      anel(10, 1.6, x + 55, y, z + 24.6, mReg, g);
+      cilZ(10, 5, x + s * 55, y, z + 22, mat(0xffffff), g);
+      anel(10, 1.6, x + s * 55, y, z + 24.6, mReg, g);
     });
-    cilZ(9, 14, x + 55, 1060, z - 27, mVol, g);
-    cilX(7, 20, x + 85, 1060, z, mLat, g, 6);
+    cilZ(9, 14, x + s * 55, 1060, z - 27, mVol, g);
+    cilX(7, 20, x + s * 85, 1060, z, mLat, g, 6);
     registaComp(id, g, { gas: gas, ponto: new THREE.Vector3(x, 1092, z) });
   }
-  garrafa('gN2', 'n2', -720, 0x1d1f22);
-  garrafa('gCO2', 'co2', -1000, 0x8c949c);
+  garrafa('gN2', 'n2', 350, 0x1d1f22);
+  garrafa('gCO2', 'co2', 620, 0x8c949c);
 
   // válvula Festo MHE2 (NC ou NO): corpo, bobina à frente, ficha com LED em cima
   function mhe2(id, gas, cx, cy) {
-    var g = novoGrupo(cx, cy, TZ);
+    var g = novoGrupo(cx, cy, TZ, painel);
     var mCorpo = mat(0x3d434a), mBob = mat(0x262a2f), mFicha = mat(0x7d8792), mAnel = mat(0x2f6fb5);
     caixa(44, 20, 24, 0, 0, 0, mCorpo, g);
     [-1, 1].forEach(function (s) {
@@ -732,11 +748,11 @@ var LogicaGases = (function () {
     var mDisco = mat(COR_FECHADA);
     cilZ(8, 1.6, 0, -2, 42.6, mDisco, g);
     anel(8.6, 1.2, 0, -2, 43.1, mat(0x9aa3ab), g);
-    registaComp(id, g, { gas: gas, bobina: mBob, led: mLed, disco: mDisco, ponto: new THREE.Vector3(cx, cy - 2, TZ + 43) });
+    registaComp(id, g, { gas: gas, bobina: mBob, led: mLed, disco: mDisco, ponto: aMundo([cx, cy - 2, TZ + 43]) });
   }
   // biestável Bürkert 0330: corpo de latão, adaptadores NPT ¼ → G ¼ e racores de 4 mm, bobina dupla, ficha 2518
   function burkert(id, gas, cx, cy) {
-    var g = novoGrupo(cx, cy, TZ);
+    var g = novoGrupo(cx, cy, TZ, painel);
     var mCorpo = mat(0xc9a54a, { shininess: 90 }), mHex = mat(0xd5b763, { shininess: 90 });
     var mLeg = mat(0x2a2d31), mBob = mat(0x202326), mFicha = mat(0x3a4047);
     caixa(40, 32, 32, 0, 0, 0, mCorpo, g);
@@ -751,11 +767,11 @@ var LogicaGases = (function () {
     var mDisco = mat(COR_FECHADA);
     cilZ(9, 1.6, 0, -3, 56.8, mDisco, g);
     anel(9.6, 1.3, 0, -3, 57.3, mat(0x9aa3ab), g);
-    registaComp(id, g, { gas: gas, bobina: mBob, disco: mDisco, ponto: new THREE.Vector3(cx, cy - 3, TZ + 57) });
+    registaComp(id, g, { gas: gas, bobina: mBob, disco: mDisco, ponto: aMundo([cx, cy - 3, TZ + 57]) });
   }
   // válvula manual de esfera: alavanca ao longo do tubo = aberta; atravessada = fechada
   function manual(id, gas, cx, cy) {
-    var g = novoGrupo(cx, cy, TZ);
+    var g = novoGrupo(cx, cy, TZ, painel);
     var mC = mat(0xc4cad0, { shininess: 100 }), mAlav = mat(0xd0442b);
     cilX(9, 26, 0, 0, 0, mC, g);
     [-1, 1].forEach(function (s) { cilX(8, 10, s * 18, 0, 0, mC, g, 6); });
@@ -765,11 +781,11 @@ var LogicaGases = (function () {
     g.add(pivo);
     caixa(30, 6, 4, 13, 0, 0, mAlav, pivo);
     cilZ(4, 5, 0, 0, 0, mAlav, pivo);
-    registaComp(id, g, { gas: gas, alavanca: pivo, alvoRot: 0, ponto: new THREE.Vector3(cx, cy, TZ + 21) });
+    registaComp(id, g, { gas: gas, alavanca: pivo, alvoRot: 0, ponto: aMundo([cx, cy, TZ + 21]) });
   }
   // antirretorno: seta por cima a mostrar o sentido (rot = rotação no plano do painel)
   function retencao(cx, cy, rot) {
-    var g = novoGrupo(cx, cy, TZ);
+    var g = novoGrupo(cx, cy, TZ, painel);
     g.rotation.z = rot || 0;
     var mAl = mat(0xb9c0c7, { shininess: 90 }), mAnel = mat(0x2f6fb5), mSeta = mat(0x3b444d);
     cilX(6.5, 34, 0, 0, 0, mAl, g);
@@ -781,33 +797,34 @@ var LogicaGases = (function () {
     cilX(1.6, 14, -5, 13, 0, mSeta, g);
   }
 
-  mhe2('v1', 'n2', -170, 460);
-  mhe2('v2', 'co2', -170, 380);
-  mhe2('v3', 'n2', -170, 260);
-  mhe2('v4', 'co2', -170, 160);
-  burkert('v5', 'n2', -15, 260);
-  burkert('v6', 'co2', -15, 160);
-  manual('v9', 'n2', 80, 260);
-  manual('v10', 'co2', 80, 160);
-  manual('v8', 'n2', -80, 304);
-  manual('v7', 'co2', -80, 204);
+  mhe2('v1', 'n2', -110, 610);
+  mhe2('v2', 'co2', -110, 530);
+  mhe2('v3', 'n2', -100, 400);
+  mhe2('v4', 'co2', -100, 220);
+  burkert('v5', 'n2', -7, 400);
+  burkert('v6', 'co2', -7, 220);
+  manual('v9', 'n2', 73, 400);
+  manual('v10', 'co2', 73, 220);
+  manual('v8', 'n2', -20, 450);
+  manual('v7', 'co2', -20, 270);
   // quatro antes dos T e um logo depois do MFC, a descer
-  [[40, 460, 0], [40, 380, 0], [175, 260, 0], [175, 160, 0], [270, 375, -Math.PI / 2]].forEach(function (p) { retencao(p[0], p[1], p[2]); });
+  [[5, 610, 0], [5, 530, 0], [143, 400, 0], [143, 220, 0], [215, 520, -Math.PI / 2]].forEach(function (p) { retencao(p[0], p[1], p[2]); });
 
   // T e uniões
   var mTe = mat(0x30363d), mLatao = mat(0xc9a54a, { shininess: 90 });
+  function eMundo(n) { return L.MUNDO.indexOf(n) >= 0; }
   ['tN2', 'tCO2', 'jN2', 'jCO2', 'kN2', 'kCO2', 'tM', 'tP', 'tF', 'tPT'].forEach(function (n) {
     var p = NOS[n];
-    caixa(13, 13, 13, p[0], p[1], p[2], mTe);
+    caixa(13, 13, 13, p[0], p[1], p[2], mTe, eMundo(n) ? scene : painel);
   });
   ['inN2', 'inCO2', 'saida'].forEach(function (n) {
     var p = NOS[n];
-    cilX(7, 18, p[0], p[1], p[2], mLatao, null, 6);
+    cilX(7, 18, p[0], p[1], p[2], mLatao, painel, 6);
   });
 
   // MFC: base por onde passa o gás, caixa da eletrónica, ficha e cabo para o PC
   (function () {
-    var g = novoGrupo(165, 420, TZ);
+    var g = novoGrupo(120, 570, TZ, painel);
     var mBase = mat(0xaab2ba, { shininess: 80 }), mCaixa = mat(0xe9ecef), mVisor = mat(0x2d3a48);
     caixa(88, 22, 30, 0, 0, 0, mBase, g);
     caixa(88, 60, 30, 0, 41, 0, mCaixa, g);
@@ -815,16 +832,15 @@ var LogicaGases = (function () {
     caixa(30, 8, 14, 0, 75, 0, mat(0x30353b), g);
     [-1, 1].forEach(function (s) { cilX(7, 12, s * 50, 0, 0, mat(0x2a2d31), g); });
     tuboMalha(caminho([[0, 79, 0], [0, 96, -6], [0, 100, -40]], 8), 2, mat(0x2b2f33), g);
-    registaComp('mfc', g, { visor: mVisor, ponto: new THREE.Vector3(165, 466, TZ + 16) });
+    registaComp('mfc', g, { visor: mVisor, ponto: aMundo([120, 616, TZ + 16]) });
   })();
 
   // PT-01 à entrada do forno
   var mSonda = mat(0x1560a8);
-  cilindro(10, 24, 620, 1042, TZ, mSonda);
-  tuboMalha(caminho([[620, 1054, TZ], [620, 1070, TZ], [660, 1082, TZ], [700, 1084, TZ]], 10), 1.3, mSonda);
+  cilindro(10, 24, -440, 1042, 0, mSonda);
+  tuboMalha(caminho([[-440, 1054, 0], [-440, 1070, 0], [-480, 1082, 0], [-520, 1084, 0]], 10), 1.3, mSonda);
 
   // forno em esquema, como na página do banho
-  var FX = 760, FZ = TZ;
   var mVidro = mat(0xe3f0f4, { transparent: true, opacity: 0.32, side: THREE.DoubleSide, shininess: 140, specular: 0xffffff, depthWrite: false });
   var mForno = mat(0xdfe3e7, { transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide });
   var corpo = cilindro(150, 420, FX, 690, FZ, mForno);
@@ -844,8 +860,8 @@ var LogicaGases = (function () {
   cilindro(4, 32, FX, 378, FZ, mat(0xd7e6ea, { transparent: true, opacity: 0.75 }));
   tuboMalha(caminho([[FX, 362, FZ], [FX, 300, FZ]], 0), 7, mat(0x24211f, { shininess: 15 }));
   var mSuporte = mat(0xb4bbc2, { shininess: 60 });
-  cilindro(7, 1090, FX + 425, 515, FZ - 110, mSuporte);
-  var braco = cilindro(5, 300, FX + 290, 690, FZ - 110, mSuporte);
+  cilindro(7, 1090, FX - 425, 515, FZ - 110, mSuporte);
+  var braco = cilindro(5, 300, FX - 290, 690, FZ - 110, mSuporte);
   braco.rotation.z = Math.PI / 2;
 
   // tubos de 4 mm (desenhados com 6 mm, para se verem) e bolinhas de gás
@@ -853,18 +869,22 @@ var LogicaGases = (function () {
   var geoP = new THREE.SphereGeometry(3.6, 10, 8);
   var mBola = mat(0xffffff, { emissive: 0x777777 });
   var mPart = { n2: mat(COR.n2, { emissive: 0x0b3d3a }), co2: mat(COR.co2, { emissive: 0x4a2c05 }) };
+  // tubos dentro da caixa: no referencial da placa; tubos até às garrafas e ao forno: na sala
   var tubos = L.TUBOS.map(function (t, i) {
-    var pts = [NOS[t[0]]].concat(t[2] || []).concat([NOS[t[1]]]);
+    var externo = eMundo(t[0]) || eMundo(t[1]);
+    var pai = externo ? scene : painel;
+    var ponta = function (n) { return externo && !eMundo(n) ? aMundo(NOS[n]).toArray() : NOS[n]; };
+    var pts = [ponta(t[0])].concat(t[2] || []).concat([ponta(t[1])]);
     var curva = caminho(pts, 12);
     var m = mat(COR_TUBO, { shininess: 30 });
-    tuboMalha(curva, 3, m);
+    tuboMalha(curva, 3, m, pai);
     var len = curva.getLength();
     var n = Math.max(2, Math.round(len / 40));
     var part = [];
     for (var k = 0; k < n; k++) {
       var s = new THREE.Mesh(geoP, mBola);
       s.visible = false;
-      scene.add(s);
+      pai.add(s);
       part.push(s);
     }
     return { chave: 'T' + i, curva: curva, mat: m, len: len, part: part, gases: [], sentido: 1 };
@@ -899,20 +919,23 @@ var LogicaGases = (function () {
     }
     return r;
   }
+  // lado de onde cada etiqueta se vê: as das válvulas só de trás (a placa está virada para trás)
+  var TRAS = [0, 0, -1], FRENTE = [0, 0, 1];
+  // posições das etiquetas no referencial da placa
   var POS_ROT = {
-    v1: [-170, 494], v2: [-170, 414], v3: [-170, 230], v4: [-170, 130], v5: [-15, 228], v6: [-15, 128],
-    v9: [80, 234], v10: [80, 134], v8: [-80, 344], v7: [-80, 244]
+    v1: [-110, 644], v2: [-110, 496], v3: [-100, 368], v4: [-100, 188], v5: [-7, 366], v6: [-7, 186],
+    v9: [73, 372], v10: [73, 192], v8: [-20, 494], v7: [-20, 310]
   };
   Object.keys(POS_ROT).forEach(function (id) {
-    rotulo(id.toUpperCase(), [POS_ROT[id][0], POS_ROT[id][1], TZ + 45], { comp: id, perto: 1, cl: 'valv ' + L.ELEM[id].gas });
+    rotulo(id.toUpperCase(), aMundo([POS_ROT[id][0], POS_ROT[id][1], TZ + 45]).toArray(), { comp: id, perto: 1, n: TRAS, cl: 'valv ' + L.ELEM[id].gas });
   });
-  var rotGN2 = rotulo('Garrafa de N₂', [-720, 620, -140], { comp: 'gN2', cl: 'n2' });
-  var rotGCO2 = rotulo('Garrafa de CO₂', [-1000, 620, -140], { comp: 'gCO2', cl: 'co2' });
-  var rotMFC = rotulo('MFC', [262, 474, TZ + 20], { comp: 'mfc' });
-  var rotForno = rotulo('Forno (esquema)', [FX + 70, 770, FZ + 160], {});
-  rotulo('Pressão à entrada do forno (PT-01): mais tarde, com o MFC', [655, 1108, TZ], { cl: 'sens', perto: 1 });
-  rotulo('Painel de válvulas', [-45, 548, TZ], { longe: 1 });
-  var rotSaida = rotulo('Saída do forno: segue para o condicionamento (blocos 1 a 3) →', [FX + 10, 280, FZ], { cl: 'ligacao' });
+  var rotGN2 = rotulo('Garrafa de N₂', [350, 620, -150], { comp: 'gN2', cl: 'n2' });
+  var rotGCO2 = rotulo('Garrafa de CO₂', [620, 620, -150], { comp: 'gCO2', cl: 'co2' });
+  var rotMFC = rotulo('MFC', aMundo([120, 718, TZ + 20]).toArray(), { comp: 'mfc', n: TRAS });
+  var rotForno = rotulo('Forno (esquema)', [FX + 70, 770, FZ + 160], { n: FRENTE });
+  rotulo('Pressão à entrada do forno (PT-01): mais tarde, com o MFC', [-420, 1108, 0], { cl: 'sens', perto: 1, n: FRENTE });
+  rotulo('Caixa das válvulas: 50 × 70 × 20 cm', [CX, 694, CZ - 100], {});
+  var rotSaida = rotulo('Saída do forno: segue para o condicionamento (blocos 1 a 3) →', [FX + 10, 280, FZ], { cl: 'ligacao', n: FRENTE });
   rotSaida.el.addEventListener('click', function () { location.href = '../condicionamento/bloco3_banho_3d.html'; });
 
   // Na internet (por exemplo no GitHub Pages), as ligações para as páginas do condicionamento só
@@ -1226,11 +1249,11 @@ var LogicaGases = (function () {
 
   // câmara, rotação e cliques
   var VISTAS = {
-    painel: { az: 0.0, pol: 1.47, r: 1320, alvo: [-55, 315, TZ] },
-    completo: { az: -0.35, pol: 1.28, r: 3500, alvo: [20, 540, -80] },
-    forno: { az: -0.42, pol: 1.3, r: 1900, alvo: [600, 720, TZ] }
+    caixa: { az: Math.PI, pol: 1.45, r: 1500, alvo: [CX, 330, CZ] },
+    completo: { az: 0.55, pol: 1.12, r: 3600, alvo: [100, 450, -150] },
+    forno: { az: -0.75, pol: 1.25, r: 1800, alvo: [-400, 760, -60] }
   };
-  var vistaIni = VISTAS[params.get('vista')] ? params.get('vista') : 'painel';
+  var vistaIni = VISTAS[params.get('vista')] ? params.get('vista') : 'completo';
   var cam = { az: VISTAS[vistaIni].az, pol: VISTAS[vistaIni].pol, r: VISTAS[vistaIni].r };
   var camAlvo = { az: cam.az, pol: cam.pol, r: cam.r };
   var alvo = v3(VISTAS[vistaIni].alvo);
@@ -1419,6 +1442,10 @@ var LogicaGases = (function () {
     rotulos.forEach(function (r) {
       var ve = true;
       if (r.perto && cam.r > LIMIAR) ve = false;
+      if (r.n) {
+        var lx = camera.position.x - alvo.x, ly = camera.position.y - alvo.y, lz = camera.position.z - alvo.z;
+        ve = ve && (lx * r.n[0] + ly * r.n[1] + lz * r.n[2]) / Math.sqrt(lx * lx + ly * ly + lz * lz) > 0.1;
+      }
       if (r.longe && cam.r <= LIMIAR) ve = false;
       proj.copy(r.v).project(camera);
       if (proj.z > 1) ve = false;
