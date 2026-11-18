@@ -155,7 +155,7 @@
     <h2>Como funciona</h2>
     <p>Cada garrafa divide-se em três linhas, que se juntam antes do forno:</p>
     <ul class="lista">
-      <li><b>Linha principal:</b> V1 (N₂) ou V2 (CO₂), normalmente fechadas → antirretorno → MFC → antirretorno → forno.</li>
+      <li><b>Linha principal:</b> V1 (N₂) ou V2 (CO₂), normalmente fechadas → antirretorno → redutor → MFC → antirretorno → forno.</li>
       <li><b>Purga:</b> V3 ou V4, normalmente abertas → biestável V5 ou V6 → manual V9 ou V10 → antirretorno → forno.</li>
       <li><b>Manual geral:</b> V8 (N₂) ou V7 (CO₂) → antirretorno → forno. Liga a garrafa ao forno sem passar pelo MFC nem pela purga, para trabalhar à mão. Fica fechada.</li>
     </ul>
@@ -179,6 +179,7 @@
       <li><b>V1 a V4:</b> Festo MHE2, com o porto 3 tapado (trabalham como 2/2) e engates de 4 mm. A ficha tem um LED.</li>
       <li><b>V5 e V6:</b> Bürkert 0330 de impulso: uma bobina de abrir e outra de fechar, com um comum. Portos NPT ¼, com adaptador para G ¼ e racor de 4 mm.</li>
       <li><b>MFC:</b> Sensirion SFC5500 de 2 L/min, ligado ao PC por RS-485.</li>
+      <li><b>Redutor:</b> Festo VRPA-CM-Q4-E, entre o T de junção e o MFC, com manómetro. Regulado a 2 bar (3 bar com o MFC de 10 L/min): o MFC aguenta no máximo 5 bar entre a entrada e a saída, e as garrafas estão a 5 bar.</li>
       <li><b>Antirretornos:</b> Festo H-QS-4, sete: um depois de cada NC, um logo depois do MFC, um no fim de cada purga e um no fim de cada manual geral.</li>
       <li><b>V7 a V10:</b> manuais de esfera Festo QH-QS-4, com engates de 4 mm.</li>
       <li><b>Tubo:</b> 4 mm entre as peças. Nas garrafas e na entrada do forno a ligação é de 1/8" (rosca ou tubo, por confirmar), com um racor para os 4 mm.</li>
@@ -186,7 +187,7 @@
 
     <h2>Por decidir</h2>
     <ul class="lista">
-      <li>A pressão dos redutores. O MFC aceita no máximo 5 bar de diferença entre a entrada e a saída.</li>
+      <li>A pressão dos redutores das garrafas e uma válvula de alívio depois de cada um. O redutor do painel só protege o MFC: a purga e as manuais gerais continuam à pressão da garrafa.</li>
       <li>O PT-01, à entrada do forno, entra mais tarde, com o MFC.</li>
     </ul>
   </aside>
@@ -220,10 +221,11 @@ var LogicaGases = (function () {
     inN2: [-235, 505, TZ], tN2: [-200, 505, TZ],
     inCO2: [-235, 350, TZ], tCO2: [-165, 350, TZ],
     v1a: [-142, 610, TZ], v1b: [-78, 610, TZ],
-    ck1a: [-20, 610, TZ], ck1b: [30, 610, TZ],
+    ck1a: [-65, 610, TZ], ck1b: [-15, 610, TZ],
     v2a: [-142, 530, TZ], v2b: [-78, 530, TZ],
-    ck2a: [-20, 530, TZ], ck2b: [30, 530, TZ],
-    tM: [45, 570, TZ],
+    ck2a: [-65, 530, TZ], ck2b: [-15, 530, TZ],
+    tM: [0, 570, TZ],
+    rdA: [10, 570, TZ], rdB: [52, 570, TZ],
     mfcA: [64, 570, TZ], mfcB: [176, 570, TZ],
     ck5a: [215, 545, TZ], ck5b: [215, 495, TZ],
     tF: [215, 310, TZ], saida: [235, 310, TZ],
@@ -256,12 +258,13 @@ var LogicaGases = (function () {
     ['inN2', 'tN2'],
     ['tN2', 'v1a', [[-200, 610, TZ]]],
     ['v1b', 'ck1a'],
-    ['ck1b', 'tM', [[45, 610, TZ]]],
+    ['ck1b', 'tM', [[0, 610, TZ]]],
     ['inCO2', 'tCO2'],
     ['tCO2', 'v2a', [[-165, 382, TZ], [-165, 392, TZ + 26], [-165, 408, TZ + 26], [-165, 418, TZ], [-165, 530, TZ]]],
     ['v2b', 'ck2a'],
-    ['ck2b', 'tM', [[45, 530, TZ]]],
-    ['tM', 'mfcA'],
+    ['ck2b', 'tM', [[0, 530, TZ]]],
+    ['tM', 'rdA'],
+    ['rdB', 'mfcA'],
     ['mfcB', 'ck5a', [[215, 570, TZ]]],
     ['ck5b', 'tF'],
     ['tN2', 'jN2', [[-200, 400, TZ]]],
@@ -309,6 +312,7 @@ var LogicaGases = (function () {
     { id: 'ck5', a: 'ck5a', b: 'ck5b', tipo: 'RET' },
     { id: 'ck6', a: 'ck6a', b: 'ck6b', tipo: 'RET' },
     { id: 'ck7', a: 'ck7a', b: 'ck7b', tipo: 'RET' },
+    { id: 'rd', a: 'rdA', b: 'rdB', tipo: 'RED' },
     { id: 'mfc', a: 'mfcA', b: 'mfcB', tipo: 'MFC' }
   ];
 
@@ -354,6 +358,7 @@ var LogicaGases = (function () {
     if (el.tipo === 'NO') return !(e.energia && e.rele[id.toUpperCase()]);
     if (el.tipo === 'BI') return !!e.bi[id];
     if (el.tipo === 'MAN') return !!e.man[id];
+    if (el.tipo === 'RED') return true;
     return false;
   }
   function passa(e, el, sentido) {
@@ -815,7 +820,23 @@ var LogicaGases = (function () {
   manual('v7', 'co2', -20, 270);
   // ck1/ck2 depois das NC, ck3/ck4 no fim das purgas, ck6/ck7 no fim das manuais gerais e ck5
   // logo depois do MFC, a descer
-  [[5, 610, 0], [5, 530, 0], [143, 400, 0], [143, 220, 0], [143, 450, 0], [143, 270, 0], [215, 520, -Math.PI / 2]].forEach(function (p) { retencao(p[0], p[1], p[2]); });
+  [[-40, 610, 0], [-40, 530, 0], [143, 400, 0], [143, 220, 0], [143, 450, 0], [143, 270, 0], [215, 520, -Math.PI / 2]].forEach(function (p) { retencao(p[0], p[1], p[2]); });
+
+  // redutor Festo VRPA-CM-Q4-E entre o T e o MFC: corpo branco, manípulo azul e manómetro do lado da
+  // saída, os dois virados para fora da placa
+  (function () {
+    var g = novoGrupo(31, 570, TZ, painel);
+    var mC = mat(0xeceae4, { shininess: 40 }), mAz = mat(0x0099ff, { shininess: 60 }), mMan = mat(0x505050);
+    caixa(32, 15, 15, 0, 0, 0, mC, g);
+    [-1, 1].forEach(function (s) {
+      cilX(5, 6, s * 18, 0, 0, mC, g);
+      cilX(5.75, 2.5, s * 21, 0, 0, mAz, g);
+    });
+    cilZ(7, 26, -5, 0, 20, mC, g);
+    cilZ(6.3, 10, -5, 0, 38, mAz, g);
+    cilZ(6, 10, 10, 0, 13, mMan, g);
+    registaComp('rd', g, { ponto: aMundo([26, 570, TZ + 43]) });
+  })();
 
   // T e uniões
   var mTe = mat(0x30363d), mLatao = mat(0xc9a54a, { shininess: 90 });
@@ -939,6 +960,7 @@ var LogicaGases = (function () {
   var rotGN2 = rotulo('Garrafa de N₂', [350, 620, -150], { comp: 'gN2', cl: 'n2' });
   var rotGCO2 = rotulo('Garrafa de CO₂', [620, 620, -150], { comp: 'gCO2', cl: 'co2' });
   var rotMFC = rotulo('MFC', aMundo([120, 718, TZ + 20]).toArray(), { comp: 'mfc', n: TRAS });
+  rotulo('Redutor', aMundo([31, 540, TZ + 45]).toArray(), { comp: 'rd', perto: 1, n: TRAS });
   var rotForno = rotulo('Forno (esquema)', [FX + 70, 770, FZ + 160], { n: FRENTE });
   rotulo('Pressão à entrada do forno (PT-01): mais tarde, com o MFC', [-420, 1108, 0], { cl: 'sens', perto: 1, n: FRENTE });
   rotulo('Caixa das válvulas: 50 × 70 × 20 cm', [CX, 694, CZ - 100], {});
@@ -1027,6 +1049,9 @@ var LogicaGases = (function () {
     if (id === 'gN2' || id === 'gCO2') {
       var g = id === 'gN2' ? 'n2' : 'co2';
       e.garrafa[g] = !e.garrafa[g];
+    } else if (id === 'rd') {
+      mensagem('O redutor não tem comando: regula-se à mão, no manípulo, a ver o manómetro.');
+      return;
     } else if (id === 'mfc') {
       if (!e.energia) { mensagem('Sem energia, o MFC está desligado.'); return; }
       e.mfc.caudal = !e.mfc.caudal;
@@ -1207,11 +1232,13 @@ var LogicaGases = (function () {
     v10: 'V10 · manual · em série na purga do CO₂',
     gN2: 'Garrafa de N₂, com redutor de pressão',
     gCO2: 'Garrafa de CO₂, com redutor de pressão',
-    mfc: 'MFC: regula o caudal da linha principal'
+    mfc: 'MFC: regula o caudal da linha principal',
+    rd: 'Redutor Festo VRPA-CM-Q4-E · baixa a pressão à entrada do MFC'
   };
   function textoAcao(id) {
     var el = L.ELEM[id];
     if (id === 'gN2' || id === 'gCO2') return 'Está ' + (e.garrafa[id === 'gN2' ? 'n2' : 'co2'] ? 'aberta. Clica para fechar.' : 'fechada. Clica para abrir.');
+    if (id === 'rd') return 'Deixa passar sempre. Regulado a 2 bar com o MFC de 2 L/min (3 bar com o de 10 L/min).';
     if (id === 'mfc') return e.energia ? 'Clica para pôr o caudal a ' + (e.mfc.caudal ? '0.' : '0,5 L/min.') : 'Sem energia: o MFC está desligado.';
     var ab = L.aberta(e, id) ? 'Aberta. ' : 'Fechada. ';
     if (el.tipo === 'NC' || el.tipo === 'NO') {
