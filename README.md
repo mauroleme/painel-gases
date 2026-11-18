@@ -9,3 +9,7 @@ Página: https://mauroleme.github.io/painel-gases/
 
 Esquema ilustrativo, com medidas assumidas. A página é um único ficheiro, `entrada_gases_3d.html`,
 que funciona sem instalar nada; para a atualizar, substitui-se esse ficheiro por uma versão nova.
+
+Modelo CAD: `painel_valvulas.step` é a montagem do painel feita no Fusion, com as peças dos
+fabricantes (válvulas Festo e Bürkert, redutor Festo VRPA, MFC Sensirion, uniões) e as cores
+originais. Abre-se em qualquer programa de CAD (Fusion, SolidWorks, FreeCAD).
