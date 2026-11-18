@@ -153,11 +153,11 @@
     <p class="nota">A calibração muda-se com o caudal a 0, antes de ligar a NC do gás novo. Fundo de escala: 2,0 L/min em N₂ e 1,0 L/min em CO₂.</p>
 
     <h2>Como funciona</h2>
-    <p>Cada garrafa divide-se em duas linhas, que se juntam antes do forno:</p>
+    <p>Cada garrafa divide-se em três linhas, que se juntam antes do forno:</p>
     <ul class="lista">
       <li><b>Linha principal:</b> V1 (N₂) ou V2 (CO₂), normalmente fechadas → antirretorno → MFC → antirretorno → forno.</li>
       <li><b>Purga:</b> V3 ou V4, normalmente abertas → biestável V5 ou V6 → manual V9 ou V10 → antirretorno → forno.</li>
-      <li><b>Bypass:</b> V7 e V8, manuais, para trabalhar à mão. Ficam fechadas.</li>
+      <li><b>Manual geral:</b> V8 (N₂) ou V7 (CO₂) → antirretorno → forno. Liga a garrafa ao forno sem passar pelo MFC nem pela purga, para trabalhar à mão. Fica fechada.</li>
     </ul>
     <p>Em ensaio, a NC do gás em uso e as duas NO ficam ligadas, e a biestável do gás em uso fica aberta. Se faltar a energia, a NC fecha, as NO abrem e a biestável aberta deixa passar o mesmo gás pela purga, sem eletrónica. O forno nunca fica sem gás.</p>
     <p><b>Ao clicar na V1, a V5 copia-a; ao clicar na V2, a V6 copia-a.</b> Na troca de gás, a biestável nova abre antes de a antiga fechar. Com o forno quente, desligar a NC não fecha a biestável: a purga fica pronta até a do outro gás abrir.</p>
@@ -179,8 +179,8 @@
       <li><b>V1 a V4:</b> Festo MHE2, com o porto 3 tapado (trabalham como 2/2) e engates de 4 mm. A ficha tem um LED.</li>
       <li><b>V5 e V6:</b> Bürkert 0330 de impulso: uma bobina de abrir e outra de fechar, com um comum. Portos NPT ¼, com adaptador para G ¼ e racor de 4 mm.</li>
       <li><b>MFC:</b> Sensirion SFC5500 de 2 L/min, ligado ao PC por RS-485.</li>
-      <li><b>Antirretornos:</b> Festo H-QS-4. Quatro antes dos T e um logo depois do MFC.</li>
-      <li><b>V7 a V10:</b> manuais, modelo por escolher.</li>
+      <li><b>Antirretornos:</b> Festo H-QS-4, sete: um depois de cada NC, um logo depois do MFC, um no fim de cada purga e um no fim de cada manual geral.</li>
+      <li><b>V7 a V10:</b> manuais de esfera Festo QH-QS-4, com engates de 4 mm.</li>
       <li><b>Tubo:</b> 4 mm entre as peças. Nas garrafas e na entrada do forno a ligação é de 1/8" (rosca ou tubo, por confirmar), com um racor para os 4 mm.</li>
     </ul>
 
@@ -231,16 +231,18 @@ var LogicaGases = (function () {
     v3a: [-132, 400, TZ], v3b: [-68, 400, TZ],
     v5a: [-55, 400, TZ], v5b: [41, 400, TZ],
     v9a: [50, 400, TZ], v9b: [96, 400, TZ],
-    kN2: [108, 400, TZ],
     ck3a: [118, 400, TZ], ck3b: [168, 400, TZ],
     v8a: [-43, 450, TZ], v8b: [3, 450, TZ],
+    ck6a: [118, 450, TZ], ck6b: [168, 450, TZ],
+    jN: [180, 400, TZ],
     jCO2: [-150, 220, TZ],
     v4a: [-132, 220, TZ], v4b: [-68, 220, TZ],
     v6a: [-55, 220, TZ], v6b: [41, 220, TZ],
     v10a: [50, 220, TZ], v10b: [96, 220, TZ],
-    kCO2: [108, 220, TZ],
     ck4a: [118, 220, TZ], ck4b: [168, 220, TZ],
     v7a: [-43, 270, TZ], v7b: [3, 270, TZ],
+    ck7a: [118, 270, TZ], ck7b: [168, 270, TZ],
+    jC: [180, 270, TZ],
     tP: [180, 310, TZ],
     tPT: [-440, 1000, 0], pt01: [-440, 1030, 0],
     forno: [-300, 950, 0]
@@ -266,20 +268,22 @@ var LogicaGases = (function () {
     ['jN2', 'v3a'],
     ['v3b', 'v5a'],
     ['v5b', 'v9a'],
-    ['v9b', 'kN2'],
-    ['kN2', 'ck3a'],
-    ['ck3b', 'tP', [[180, 400, TZ]]],
+    ['v9b', 'ck3a'],
+    ['ck3b', 'jN'],
+    ['jN', 'tP'],
     ['jN2', 'v8a', [[-150, 450, TZ]]],
-    ['v8b', 'kN2', [[108, 450, TZ]]],
+    ['v8b', 'ck6a'],
+    ['ck6b', 'jN', [[180, 450, TZ]]],
     ['tCO2', 'jCO2', [[-165, 220, TZ]]],
     ['jCO2', 'v4a'],
     ['v4b', 'v6a'],
     ['v6b', 'v10a'],
-    ['v10b', 'kCO2'],
-    ['kCO2', 'ck4a'],
-    ['ck4b', 'tP', [[180, 220, TZ]]],
+    ['v10b', 'ck4a'],
+    ['ck4b', 'jC', [[180, 220, TZ]]],
+    ['jC', 'tP'],
     ['jCO2', 'v7a', [[-150, 270, TZ]]],
-    ['v7b', 'kCO2', [[108, 270, TZ]]],
+    ['v7b', 'ck7a'],
+    ['ck7b', 'jC'],
     ['tP', 'tF'],
     ['tF', 'saida'],
     ['saida', 'tPT', [[-580, 280, -260], [-580, 1000, -260], [-580, 1000, 0]]],
@@ -303,6 +307,8 @@ var LogicaGases = (function () {
     { id: 'ck3', a: 'ck3a', b: 'ck3b', tipo: 'RET' },
     { id: 'ck4', a: 'ck4a', b: 'ck4b', tipo: 'RET' },
     { id: 'ck5', a: 'ck5a', b: 'ck5b', tipo: 'RET' },
+    { id: 'ck6', a: 'ck6a', b: 'ck6b', tipo: 'RET' },
+    { id: 'ck7', a: 'ck7a', b: 'ck7b', tipo: 'RET' },
     { id: 'mfc', a: 'mfcA', b: 'mfcB', tipo: 'MFC' }
   ];
 
@@ -412,7 +418,7 @@ var LogicaGases = (function () {
     var c = [];
     if (R.flui.mfc) c.push('principal');
     if (R.flui.v5 || R.flui.v6) c.push('purga');
-    if (R.flui.v7 || R.flui.v8) c.push('bypass');
+    if (R.flui.v7 || R.flui.v8) c.push('geral');
     return c;
   }
   function motivoSemPurga(e, emUso) {
@@ -445,7 +451,7 @@ var LogicaGases = (function () {
       regras.push({ id: 'purga', nivel: 'aviso', texto: 'A purga está a passar com energia: o gás entra no forno sem passar pelo MFC. Em ensaio, as duas NO ficam ligadas e a purga fechada.' });
     }
     if (GASES.some(function (g) { return f[g].flui.v7 || f[g].flui.v8; })) {
-      regras.push({ id: 'bypass', nivel: 'aviso', texto: 'O gás passa pelo bypass manual (V7 ou V8), sem controlo nenhum. É só para trabalhar à mão.' });
+      regras.push({ id: 'geral', nivel: 'aviso', texto: 'O gás passa pela manual geral (V7 ou V8), direto da garrafa ao forno, sem MFC e sem controlo nenhum. É só para trabalhar à mão.' });
     }
     var gasAoMFC = GASES.some(function (g) { return f[g].nos.mfcA; });
     if (e.energia && e.mfc.caudal && !gasAoMFC) {
@@ -807,13 +813,14 @@ var LogicaGases = (function () {
   manual('v10', 'co2', 73, 220);
   manual('v8', 'n2', -20, 450);
   manual('v7', 'co2', -20, 270);
-  // quatro antes dos T e um logo depois do MFC, a descer
-  [[5, 610, 0], [5, 530, 0], [143, 400, 0], [143, 220, 0], [215, 520, -Math.PI / 2]].forEach(function (p) { retencao(p[0], p[1], p[2]); });
+  // ck1/ck2 depois das NC, ck3/ck4 no fim das purgas, ck6/ck7 no fim das manuais gerais e ck5
+  // logo depois do MFC, a descer
+  [[5, 610, 0], [5, 530, 0], [143, 400, 0], [143, 220, 0], [143, 450, 0], [143, 270, 0], [215, 520, -Math.PI / 2]].forEach(function (p) { retencao(p[0], p[1], p[2]); });
 
   // T e uniões
   var mTe = mat(0x30363d), mLatao = mat(0xc9a54a, { shininess: 90 });
   function eMundo(n) { return L.MUNDO.indexOf(n) >= 0; }
-  ['tN2', 'tCO2', 'jN2', 'jCO2', 'kN2', 'kCO2', 'tM', 'tP', 'tF', 'tPT'].forEach(function (n) {
+  ['tN2', 'tCO2', 'jN2', 'jCO2', 'jN', 'jC', 'tM', 'tP', 'tF', 'tPT'].forEach(function (n) {
     var p = NOS[n];
     caixa(13, 13, 13, p[0], p[1], p[2], mTe, eMundo(n) ? scene : painel);
   });
@@ -1077,7 +1084,7 @@ var LogicaGases = (function () {
     var p = [];
     if (c.indexOf('principal') >= 0) p.push('pela linha principal, regulado pelo MFC');
     if (c.indexOf('purga') >= 0) p.push('pela purga, sem passar pelo MFC');
-    if (c.indexOf('bypass') >= 0) p.push('pelo bypass manual');
+    if (c.indexOf('geral') >= 0) p.push('pela manual geral, sem MFC');
     return p.join(' e ');
   }
   function textoAgora(a) {
@@ -1099,7 +1106,7 @@ var LogicaGases = (function () {
     }
     var g = a.falha[0], c = a.caminhosFalha[g];
     var s = 'o ' + NOME[g] + (a.entram.length ? ' continua ' : ' passa a entrar ') +
-      (c.indexOf('purga') >= 0 ? 'pela purga, sem eletrónica.' : 'pelo bypass manual.');
+      (c.indexOf('purga') >= 0 ? 'pela purga, sem eletrónica.' : 'pela manual geral.');
     if (a.emUso.length === 1 && a.emUso[0] !== g) s += ' Mas o gás em uso é o ' + NOME[a.emUso[0]] + ': a purga trocava de gás.';
     return s;
   }
@@ -1194,8 +1201,8 @@ var LogicaGases = (function () {
     v4: 'V4 · normalmente aberta · purga do CO₂',
     v5: 'V5 · biestável · purga do N₂',
     v6: 'V6 · biestável · purga do CO₂',
-    v7: 'V7 · manual · bypass da purga do CO₂',
-    v8: 'V8 · manual · bypass da purga do N₂',
+    v7: 'V7 · manual geral do CO₂ · da garrafa ao forno, sem MFC',
+    v8: 'V8 · manual geral do N₂ · da garrafa ao forno, sem MFC',
     v9: 'V9 · manual · em série na purga do N₂',
     v10: 'V10 · manual · em série na purga do CO₂',
     gN2: 'Garrafa de N₂, com redutor de pressão',
