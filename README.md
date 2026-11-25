@@ -13,8 +13,8 @@ que funciona sem instalar nada; para a atualizar, substitui-se esse ficheiro por
 Modelo CAD: `painel_valvulas.step` é a montagem do painel feita no Fusion, com as peças dos
 fabricantes (válvulas Festo e Bürkert, redutor Festo VRPA, MFC Sensirion, uniões) e as cores
 originais. Inclui os pés e, por baixo do painel, a base impressa da eletrónica (Raspberry Pi 5,
-DHT22, sensor de CO, ligadores Wago e MAX31856). Abre-se em qualquer programa de CAD (Fusion,
-SolidWorks, FreeCAD).
+DHT22, sensor de CO, ligadores Wago e MAX31856); o Raspberry Pi está simplificado, para o ficheiro
+ficar leve. Abre-se em qualquer programa de CAD (Fusion, SolidWorks, FreeCAD).
 
 ## Vistas do modelo CAD
 
