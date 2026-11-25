@@ -12,12 +12,14 @@ que funciona sem instalar nada; para a atualizar, substitui-se esse ficheiro por
 
 Modelo CAD: `painel_valvulas.step` é a montagem do painel feita no Fusion, com as peças dos
 fabricantes (válvulas Festo e Bürkert, redutor Festo VRPA, MFC Sensirion, uniões) e as cores
-originais. Abre-se em qualquer programa de CAD (Fusion, SolidWorks, FreeCAD).
+originais. Inclui os pés e, por baixo do painel, a base impressa da eletrónica (Raspberry Pi 5,
+DHT22, sensor de CO, ligadores Wago e MAX31856). Abre-se em qualquer programa de CAD (Fusion,
+SolidWorks, FreeCAD).
 
 ## Vistas do modelo CAD
 
-O painel de pé, como fica montado: N₂ em cima (azul), CO₂ em baixo (laranja), saída para o
-forno à esquerda e entradas das garrafas em baixo à direita.
+O painel de pé, sobre dois pés impressos, como fica montado: N₂ em cima (azul), CO₂ em baixo
+(laranja), saída para o forno à esquerda e entradas das garrafas em baixo à direita.
 
 ![Frente](vistas/01_frente.png)
 
@@ -34,3 +36,8 @@ MFC, redutor de pressão VRPA e T de junção:
 Válvulas NC (V1, V2), V4 e entradas das garrafas:
 
 ![Válvulas NC e entradas](vistas/06_valvulas_nc_entradas.png)
+
+Por baixo do painel, entre os pés: a base impressa com o Raspberry Pi 5, o DHT22, o sensor de CO,
+os Wago do barramento e o MAX31856 do termopar do chassi:
+
+![Base do Pi e sensores](vistas/07_base_pi_sensores.png)
